@@ -5,17 +5,20 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-prefix = "https://content.codecademy.com/courses/beautifulsoup/"
-webpage_response = requests.get('https://content.codecademy.com/courses/beautifulsoup/cacao/index.html')
 
+#Helper Functions
+def string_in_list(list, string):
+   if string in list:
+      return True
+   else:
+      return False
 
-webpage = webpage_response.content
-soup = BeautifulSoup(webpage, "html.parser")
+#Core Data Scraping
+
 
 ######################## This section scrapes all drafting data by year ############
 # for year in range(14, 24):
 #   league_link = "https://fantasy.nfl.com/league/2338570/history/20" + str(year) + "/draftresults?draftResultsDetail=0&draftResultsTab=round&draftResultsType=results"
-#   print(league_link)
   
 #   nfl_webpage_response = requests.get(league_link)
 #   nfl_page = nfl_webpage_response.content
@@ -53,27 +56,41 @@ soup = BeautifulSoup(webpage, "html.parser")
 
 ######################## This section scrapes all Win/Loss data by year ############
 for year in range(14, 24):
-  ######### Get an updated dictionary of the year's owners and real name ######## 
+  
+  ## Get an updated dictionary of the year's owners and real name ##
   manager_names = "https://fantasy.nfl.com/league/2338570/history/20" + str(year) + "/owners"
   manager_web_response = requests.get(manager_names)
   manager_page = BeautifulSoup(manager_web_response.content, "html.parser")
   team_name = []
   user_name = []
+  moves = []
+  trades = []
   team_names = manager_page.find_all("a", class_="teamName")
   user_names = manager_page.find_all("td", class_="teamOwnerName")
-  # print()
+  user_moves = manager_page.find_all("td", class_="teamTransactionCount numeric")
+  user_trades = manager_page.find_all("td", class_="teamTradeCount numeric")
+
   user_name_count = 0
+  alias = ["Xochimilco Axolotls", "West Loop Wyverns", "Toronto Angels", "Parry Sound Dragons", "Barrie Dragons" ]
+
   for manager in team_names:
     team_name.append(manager.get_text())
     name = user_names[user_name_count].get_text()
     if name == "Jim":
       name = "Matt T"
+    if string_in_list(alias, manager.get_text()):
+       name = "Matt Z"
     user_name.append(name)
     user_name_count +=1
-  team_to_player_dict = dict(zip(team_name, user_name))
-  #use dict.get() method to change the Matts
-  print(team_to_player_dict)
 
+  team_to_player_dict = dict(zip(team_name, user_name))
+  print(team_to_player_dict)
+  
+
+  ##Get other info on Manager Page - Moves and Trades 
+
+
+##
   ######### Get the Win/Loss Records and Points for ######## 
 
   # league_link_WL = "https://fantasy.nfl.com/league/2338570/history/20" + str(year) + "/draftresults?draftResultsDetail=0&draftResultsTab=round&draftResultsType=results"
@@ -81,54 +98,6 @@ for year in range(14, 24):
   # nfl_webpage_response_WL = requests.get(league_link)
   # nfl_page_WL = nfl_webpage_response.content
   # nfl_soup_WL = BeautifulSoup(nfl_page, "html.parser")
-
-
-
-
-
-
-
-
-
-chocolate_ratings = soup.find_all(attrs={"class": "Rating"})
-
-ratings = []
-
-for rating in chocolate_ratings[1:]:
-    ratings.append(float(rating.get_text()))
-
-
-
-# print(ratings)
-
-names = []
-company_names = soup.select(".Company")
-# print(company_names)
-for name in company_names[1:]:
-    names.append(name.get_text())
-
-# print(names)
-percents = []
-cocoa_percents = soup.select(".CocoaPercent")
-for percent in cocoa_percents[1:]:
-  num_to_add = float(percent.get_text().split('%')[0])
-  percents.append(num_to_add)
-    
-d = {"Company" : names, "Ratings" : ratings, "CocoaPercent": percents }
-chocolate_df = pd.DataFrame.from_dict(d)
-# print(chocolate_df.nlargest(4, 'Ratings', keep='all'))
-average_rating = chocolate_df.groupby(['Company']).Ratings.mean()
-# top_ten = average_rating.nlargest(10)
-# print(top_ten)
-# chocolate_df.index += 1
-# print(chocolate_df)
-
-# plt.scatter(chocolate_df.CocoaPercent, chocolate_df.Ratings)
-# z = np.polyfit(chocolate_df.CocoaPercent, chocolate_df.Ratings, 1)
-# line_function = np.poly1d(z)
-# plt.plot(chocolate_df.CocoaPercent, line_function(chocolate_df.CocoaPercent), "r--")
-
-# plt.show()
 
 
 

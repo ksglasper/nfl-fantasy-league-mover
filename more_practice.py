@@ -91,7 +91,7 @@ for year in range(14, 24):
   ##Create DataFrame with Player, Moves, and Trades by year
   move_trade_dict = {"Name" : user_name, "Moves" : moves, "Trades" : trades}
   name_moves_trade_df = pd.DataFrame.from_dict(move_trade_dict)
-  print("Year: 20" + str(year))
+  name_moves_trade_df.index.name = "Year: 20" + str(year)
   print(name_moves_trade_df)
 
   ##Get other info on Manager Page - Moves and Trades 

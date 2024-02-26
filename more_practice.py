@@ -52,7 +52,7 @@ for year in range(14, 15):
   ## Create DataFrame with Player, Moves, and Trades by year ##
   move_trade_dict = {"Name" : user_name, "Moves" : moves, "Trades" : trades}
   name_moves_trade_df = pd.DataFrame.from_dict(move_trade_dict)
-  name_moves_trade_df.index.name = "Year: 20" + str(year)
+  name_moves_trade_df.index.name = "Season Transactions: Year 20" + str(year)
   print(name_moves_trade_df)
 
 
@@ -85,11 +85,11 @@ for year in range(14, 15):
   if len(auction_amount) > 0:
     draft_2014_dict = {"Draft Number" : draft_order, "Player Name" : player_names, "Auction Amount": auction_amount, "Team Name": team_names }
     draft_2014 = pd.DataFrame.from_dict(draft_2014_dict)
-    draft_2014.index.name = "Year: 20" + str(year)
+    draft_2014.index.name = "Auction Draft Results: Year 20" + str(year)
   else:
     draft_2014_dict = {"Draft Number" : draft_order, "Player Name" : player_names, "Team Name": team_names }
     draft_2014 = pd.DataFrame.from_dict(draft_2014_dict)
-    draft_2014.index.name = "Year: 20" + str(year)
+    draft_2014.index.name = "Snake Draft Results: Year 20" + str(year)
   print(draft_2014)
 
 ######################## This section scrapes all Win/Loss, Winning %, Regular Season Rankings, Points For/Against data by year ########################
@@ -135,8 +135,32 @@ for year in range(14, 15):
   #create DataFrame from arrays placed in dictionary
   standings_dict = {"Name" : name, "Rank" : rank, "Wins" : wins, "Losses" : losses, "Pct" : percent_WL, "Points For" : points_for, "Points Against" : points_against}
   standings_df = pd.DataFrame.from_dict(standings_dict)
-  standings_df.index.name = "Year: 20" + str(year)
+  standings_df.index.name = " Regular Season Standings: Year 20" + str(year)
   print(standings_df)
+
+  ## Get Final Standings for each season ##
+  nfl_final_standings_link = requests.get("https://fantasy.nfl.com/league/2338570/history/20" + str(year) + "/standings")
+  nfl_final_standings_soup = BeautifulSoup(nfl_final_standings_link.content, "html.parser")
+
+  ## Build final standing and name arrays for Dataframe ##
+  final_standing = []
+  person = []
+
+  final_standing_tags = nfl_final_standings_soup.find_all("div", class_="place")
+  person_tags = nfl_final_standings_soup.find_all("a", class_="teamName")
+  
+  #reset cycle_count for next task  
+  cycle_count = 1
+  for place in final_standing_tags:
+    final_standing.append(place.get_text())
+    person.append(team_to_player_dict.get(person_tags[cycle_count].get_text()))
+    cycle_count += 1
+  
+  #create DataFrame for arrays into dictionary
+  final_standings_dict = {"Name" : person, "Place" : final_standing}
+  final_standings_df = pd.DataFrame.from_dict(final_standings_dict)
+  final_standings_df.index.name = "Season Final Standings: Year 20" + str(year)
+  print(final_standings_df)
 
     
 

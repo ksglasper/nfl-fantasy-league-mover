@@ -35,7 +35,8 @@ total_head2head = {"Kyle" : [],
                    }
 
 ######################## This section scrapes all drafting data by year ########################
-for year in range(14, 15):
+for year in range(14, 24):
+  print("Entering year 20" + str(year) + " ...")
   ## Get an updated dictionary of the year's owners and real name ##
   manager_names = "https://fantasy.nfl.com/league/2338570/history/20" + str(year) + "/owners"
   manager_web_response = requests.get(manager_names)
@@ -55,7 +56,7 @@ for year in range(14, 15):
 
   for manager in team_names_by_season:
     season_team_name_master_list.append(manager.get_text())
-    name = user_names_by_season[cycle_count].get_text()
+    name = user_names_by_season[cycle_count].get_text().strip()
     if name == "Jim":
       name = "Matt T"
     if string_in_list(alias, manager.get_text()):
@@ -85,7 +86,7 @@ for year in range(14, 15):
   nfl_draft_order = nfl_soup.find_all(attrs={"class": "count"})
   nfl_draft_players = nfl_soup.find_all(attrs={"class": "playerName"})
   draft_team_name_bs = nfl_soup.find_all("a", class_="teamName")
-  nfl_draft_auction_for = nfl_soup.find_all(attrs={"class": "auctionCost"})
+  nfl_draft_auction_for = nfl_soup.find_all("span", class_="auctionCost")
 
   draft_order = []
   auction_amount = []
@@ -99,9 +100,13 @@ for year in range(14, 15):
     player_names.append(nfl_draft_players[cycle_count].get_text())
     draft_team_names.append(team_to_player_dict.get(draft_team_name_bs[cycle_count].get_text()))
     cycle_count += 1
+  
+  cycle_count = 0
+
   for price in nfl_draft_auction_for:
-    auction_to_number = nfl_draft_auction_for[cycle_count].get_text().split('$')[1]
+    auction_to_number = (nfl_draft_auction_for[cycle_count].get_text()).split('$')[1]
     auction_amount.append(int(auction_to_number))
+
   if len(auction_amount) > 0:
     draft_2014_dict = {"Draft Number" : draft_order, "Player Name" : player_names, "Auction Amount": auction_amount, "Team Name": draft_team_names }
     draft_2014 = pd.DataFrame.from_dict(draft_2014_dict)
@@ -184,8 +189,10 @@ for year in range(14, 15):
 
 ######################## This section scrapes all H2H data including win/loss, points for/against, and win pecentage against each player for the year data by year ########################
   reg_season = 14
-  if(year >= 19):
+  if(year >= 19 and year < 21):
     reg_season = 12
+  elif year >= 21:
+    reg_season = 13
   ## Get the Win/Loss Records, Points for/against, and regular season standings from Standings Page ##
   for team_num in range(1, len(season_username_master_list) + 1):
     league_link_head2head = "https://fantasy.nfl.com/league/2338570/history/20" + str(year) + "/schedule?standingsTab=schedule&scheduleType=team&leagueId=2338570&scheduleDetail=" + str(team_num)
@@ -203,7 +210,7 @@ for year in range(14, 15):
     #   "pf" : 0,
     #   "pa" : 0
     # }
-    head2head_team = nfl_soup_head2head.find_all("span", class_="userName")
+    head2head_team = nfl_soup_head2head.find_all("h2", class_="teamName")
     head2head_opponent = nfl_soup_head2head.find_all("div", class_="teamImageAndNameWrap")
     head2head_wins_and_losses = nfl_soup_head2head.find_all("em", class_="resultText")
     head2head_points_for = nfl_soup_head2head.find_all("em", class_="teamTotal")
@@ -213,7 +220,7 @@ for year in range(14, 15):
     percent_WL = []
     points_for = []
     points_against = []
-    reg_season_stats_name =head2head_team[0].get_text().strip()
+    reg_season_stats_name = team_to_player_dict.get(head2head_team[0].get_text().strip())
 
 
 
@@ -233,10 +240,36 @@ for year in range(14, 15):
       yearly_head2head[weekOpponent]["pa"] = round((yearly_head2head[weekOpponent]["pa"] + float(head2head_points_for[week * 2 + 1].get_text())), 2)
     # print(yearly_head2head)
     total_head2head[reg_season_stats_name].append({"20" + str(year) : yearly_head2head})
-print(total_head2head)
+  print("Exiting year 20" + str(year) + " ...")
+  
+# print(total_head2head["Kyle"])
+def gather_total_stats(name):
+  # index = 0
+  stat_builder = {}
+  for year in total_head2head[name]:
+    for year_obj in year:
+      for opponent in year[year_obj]:
+        if stat_builder.get(opponent) == None:
+          stat_builder[opponent] = {
+          "Win" : year[year_obj][opponent]["Win"],
+          "Loss" : year[year_obj][opponent]["Loss"],
+          "pf" : year[year_obj][opponent]["pf"],
+          "pa" : year[year_obj][opponent]["pa"]
+          }
+          continue
+        stat_builder[opponent]["Win"] += year[year_obj][opponent]["Win"]
+        stat_builder[opponent]["Loss"] += year[year_obj][opponent]["Loss"]
+        stat_builder[opponent]["pf"] = round(stat_builder[opponent]["pf"] + year[year_obj][opponent]["pf"], 2)
+        stat_builder[opponent]["pa"] = round(stat_builder[opponent]["pa"] + year[year_obj][opponent]["pa"], 2)
+  return stat_builder
+print(gather_total_stats("Kyle"))
+
+
+
 
     
 
+        # "Win" : total_head2head[name][index][year][opponent]["Win"],
     
 
 
